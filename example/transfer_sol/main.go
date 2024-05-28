@@ -39,7 +39,7 @@ func main() {
 	var from = web3.NewSigner(decode)
 	// generate a random public key
 	var to = web3.Keypair.Generate().PublicKey()
-	var amount uint64 = 10
+	var amount uint64 = web3.LAMPORTS_PER_SOL
 
 	// check balance
 	{
