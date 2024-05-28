@@ -1,6 +1,6 @@
 # Solana Go Web3 Library
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/yourusername/solana-web3-go.svg)](https://pkg.go.dev/github.com/yourusername/solana-web3-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/donutnomad/solana-web3.svg)](https://pkg.go.dev/github.com/donutnomad/solana-web3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 This is a Go library for interacting with the Solana blockchain, inspired by the official [@solana/web3.js](https://github.com/solana-labs/solana-web3.js) JavaScript library. It provides a simple and easy-to-use API for building applications on the Solana network using Go.
@@ -45,7 +45,7 @@ go get github.com/donutnomad/solana-web3/
 
 ## Documentation
 
-Full documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/yourusername/solana-web3-go).
+Full documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/donutnomad/solana-web3).
 
 ## Contributing
 
@@ -64,7 +64,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgements
 
 This library was inspired by and based on the official [@solana/web3.js](https://github.com/solana-labs/solana-web3.js) library and the [github.com/gagliardetto](https://github.com/gagliardetto/solana-go) repository.
-
----
-
-Feel free to adjust the text as necessary to better fit your specific library and use cases.
