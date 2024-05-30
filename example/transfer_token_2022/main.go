@@ -73,9 +73,8 @@ func main() {
 		panic(err)
 	}
 
-	transaction.SetFeePayer(owner.PublicKey())
-
 	// send and confirm transaction
+	transaction.SetFeePayer(fromOwner)
 	signature, err := client.SendAndConfirmTransaction(context.Background(), transaction,
 		[]web3.Signer{owner}, web3.ConfirmOptions{
 			SkipPreflight:       web3.Ref(false),

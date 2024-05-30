@@ -591,6 +591,38 @@ func (c *Connection) GetTokenAccountBalance(tokenAddress PublicKey, commitment *
 	return requestContext[TokenAmount](context.Background(), c, "getTokenAccountBalance", args, "failed to get token account balance")
 }
 
+type GetTokenAccountsByDelegateConfig struct {
+	// Optional commitment level
+	Commitment *Commitment
+	// The minimum slot that the request can be evaluated at
+	MinContextSlot uint64 `json:"minContextSlot,omitempty"`
+}
+
+type GetTokenAccountsByDelegateResponse struct {
+	Pubkey  PublicKey `json:"pubkey,omitempty"`
+	Account struct {
+		Executable bool            `json:"executable,omitempty"`
+		Owner      PublicKey       `json:"owner,omitempty"`
+		Lamports   uint64          `json:"lamports,omitempty"`
+		Data       json.RawMessage `json:"data,omitempty"`
+		RentEpoch  uint64          `json:"rentEpoch,omitempty"`
+	} `json:"account"`
+}
+
+// GetTokenAccountsByDelegate Returns all SPL Token accounts by approved Delegate.
+func (c *Connection) GetTokenAccountsByDelegate(ownerAddress PublicKey, filter TokenAccountsFilter, config GetTokenAccountsByDelegateConfig) (*RpcResponseAndContext[GetTokenAccountsByDelegateResponse], error) {
+	var _args = []any{ownerAddress.Base58()}
+	if filter.mint != nil {
+		_args = append(_args, _M{"mint": filter.mint.Base58()})
+	} else {
+		_args = append(_args, _M{"programId": filter.programId.Base58()})
+	}
+	args := c.buildArgs(_args, config.Commitment, &EncodingBase64, config)
+	return requestContext[GetTokenAccountsByDelegateResponse](context.Background(), c, "getTokenAccountsByDelegate", args,
+		msg("failed to get token accounts owned by account %s", ownerAddress),
+	)
+}
+
 type GetTokenAccountsByOwnerConfig struct {
 	// Optional commitment level
 	Commitment *Commitment
