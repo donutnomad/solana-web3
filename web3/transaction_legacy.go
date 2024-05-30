@@ -76,6 +76,19 @@ func (t *Transaction) AddInstruction3(ins solana.Instruction) error {
 	return nil
 }
 
+func (t *Transaction) AddInstruction4(ins Instruction) error {
+	var keys []AccountMeta
+	for _, item := range ins.Accounts() {
+		keys = append(keys, *item)
+	}
+	data, err := ins.Data()
+	if err != nil {
+		return err
+	}
+	t.AddInstruction(keys, ins.ProgramID(), data)
+	return nil
+}
+
 func (t *Transaction) SetFeePayer(payer PublicKey) {
 	t.feePayer = &payer
 }

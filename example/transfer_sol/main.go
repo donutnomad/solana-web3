@@ -3,25 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/donutnomad/solana-web3/example/common"
 	"github.com/donutnomad/solana-web3/web3"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
-	"github.com/mr-tron/base58"
 )
-
-// LamportsToSol Approximately convert fractional native tokens (lamports) into native tokens (SOL)
-func LamportsToSol(lamports uint64) float64 {
-	return float64(lamports) / float64(web3.LAMPORTS_PER_SOL)
-}
-
-// SolToLamports Approximately convert native tokens (SOL) into fractional native tokens (lamports)
-func SolToLamports(sol float64) uint64 {
-	return uint64(sol * float64(web3.LAMPORTS_PER_SOL))
-}
-
-func LamportsToString(lamports uint64) string {
-	return fmt.Sprintf("%.9f", LamportsToSol(lamports))
-}
 
 func main() {
 	var commitment = web3.CommitmentConfirmed
@@ -31,15 +17,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	var privateKey = "your private key"
-	decode, err := base58.Decode(privateKey)
-	if err != nil {
-		panic(err)
-	}
-	var from = web3.NewSigner(decode)
+
+	var from = common.GetYourPrivateKey()
 	// generate a random public key
 	var to = web3.Keypair.Generate().PublicKey()
-	var amount uint64 = web3.LAMPORTS_PER_SOL
+	var amount = web3.LAMPORTS_PER_SOL
 
 	// check balance
 	{
@@ -54,7 +36,7 @@ func main() {
 		if amount < rent-balance {
 			// Error: Transaction simulation failed: Transaction results in an account (1) with insufficient funds for rent
 			// The amount needs to be greater than rent
-			fmt.Printf("warn: insufficient funds for rent, balance: %s SOL, rent exemption: %s SOL, amount: %s SOL\n", LamportsToString(balance), LamportsToString(rent), LamportsToString(amount))
+			fmt.Printf("warn: insufficient funds for rent, balance: %s SOL, rent exemption: %s SOL, amount: %s SOL\n", common.LamportsToString(balance), common.LamportsToString(rent), common.LamportsToString(amount))
 		}
 	}
 
@@ -79,5 +61,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Transfer SOL")
+	fmt.Printf("From: %s, To: %s,  Amount: %d\n", from, to, amount)
 	fmt.Println("Signature:", signature)
 }

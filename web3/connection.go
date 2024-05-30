@@ -585,6 +585,12 @@ func (c *Connection) GetTokenSupply(tokenMintAddress PublicKey, commitment *Comm
 	return requestContext[TokenAmount](context.Background(), c, "getTokenSupply", args, "failed to get token supply")
 }
 
+// GetTokenAccountBalance Fetch the current balance of a token account
+func (c *Connection) GetTokenAccountBalance(tokenAddress PublicKey, commitment *Commitment) (*RpcResponseAndContext[TokenAmount], error) {
+	args := c.buildArgs([]any{tokenAddress.Base58()}, commitment, nil, nil)
+	return requestContext[TokenAmount](context.Background(), c, "getTokenAccountBalance", args, "failed to get token account balance")
+}
+
 type GetTokenAccountsByOwnerConfig struct {
 	// Optional commitment level
 	Commitment *Commitment
