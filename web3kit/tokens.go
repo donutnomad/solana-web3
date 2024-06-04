@@ -62,9 +62,7 @@ func (t tokenKit) Transfer(
 	}
 	var transaction = web3.NewTransactionWithBlock(blockhash.Blockhash, blockhash.LastValidBlockHeight)
 	transaction.SetFeePayer(payer.PublicKey())
-	for _, ins := range instructions {
-		transaction.AddInstruction2(ins)
-	}
+	transaction.AddInstructions(instructions...)
 	if confirm {
 		return connection.SendAndConfirmTransaction(ctx, *transaction, []web3.Signer{payer, from}, options)
 	} else {
@@ -94,8 +92,7 @@ func (tokenKit) GetTransferInstructions(
 	var tx = web3.Transaction{}
 
 	if programId == web3.SystemProgramID {
-		ins := Must1(system.NewTransferInstruction(amount, solana.PublicKey(from), solana.PublicKey(to)).ValidateAndBuild())
-		Must(tx.AddInstruction3(ins))
+		Must(tx.AddInsBuilder(system.NewTransferInstruction(amount, from.D(), to.D())))
 		return tx.ExportIns(), nil
 	}
 
@@ -106,17 +103,22 @@ func (tokenKit) GetTransferInstructions(
 		if tokenAccountInfo != nil {
 			continue
 		}
-		ins := Must1(ata.NewCreateInstruction(payer, accounts[0], accounts[1], mint, web3.SystemProgramID, programId).ValidateAndBuild())
-		Must(tx.AddInstruction4(ins))
+		Must(tx.AddInsBuilder(
+			ata.NewCreateInstruction(payer, accounts[0], accounts[1], mint, web3.SystemProgramID, programId),
+		))
 	}
 	if programId == web3.TokenProgram2022ID {
-		ins := Must1(spltoken2022.NewTransferInstruction(amount, associatedFrom, associatedTo, from).SetAuthorityAccount(from, multiSigners...).ValidateAndBuild())
-		Must(tx.AddInstruction4(ins))
+		Must(tx.AddInsBuilder(
+			spltoken2022.NewTransferInstruction(amount, associatedFrom, associatedTo, from).SetAuthorityAccount(from, multiSigners...),
+		))
 	} else {
-		ins := Must1(token.NewTransferInstruction(amount, solana.PublicKey(associatedFrom), solana.PublicKey(associatedTo), solana.PublicKey(from), Map(multiSigners, func(i int, t web3.PublicKey) solana.PublicKey {
-			return solana.PublicKey(t)
-		})).ValidateAndBuild())
-		Must(tx.AddInstruction3(ins))
+		Must(tx.AddInsBuilder(
+			token.NewTransferInstruction(amount, associatedFrom.D(), associatedTo.D(), from.D(), Map(multiSigners, convertPublicKey))),
+		)
 	}
 	return tx.ExportIns(), nil
+}
+
+var convertPublicKey = func(i int, t web3.PublicKey) solana.PublicKey {
+	return t.D()
 }

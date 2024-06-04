@@ -47,6 +47,8 @@ func NewTransactionWithBlock(recentBlockhash Blockhash, lastValidBlockHeight uin
 	}
 }
 
+var InvalidType = errors.New("invalid type")
+
 func (t *Transaction) AddInstruction(keys []AccountMeta, programId PublicKey, data []byte) {
 	t.instructions = append(t.instructions, TransactionInstruction{
 		Keys:      keys,
@@ -55,37 +57,42 @@ func (t *Transaction) AddInstruction(keys []AccountMeta, programId PublicKey, da
 	})
 }
 
-func (t *Transaction) AddInstruction2(ins TransactionInstruction) {
-	t.instructions = append(t.instructions, ins)
+func (t *Transaction) AddInstructions(ins ...TransactionInstruction) {
+	for _, ins_ := range ins {
+		t.instructions = append(t.instructions, ins_)
+	}
 }
 
-func (t *Transaction) AddInstruction3(ins solana.Instruction) error {
-	var keys []AccountMeta
-	for _, item := range ins.Accounts() {
-		keys = append(keys, AccountMeta{
-			Pubkey:     PublicKey(item.PublicKey),
-			IsSigner:   item.IsSigner,
-			IsWritable: item.IsWritable,
-		})
+func (t *Transaction) AddInstructionAny(anyIns any) (err error) {
+	var ins *TransactionInstruction
+	switch v := anyIns.(type) {
+	case *TransactionInstruction:
+		ins = v
+	case TransactionInstruction:
+		ins = &v
+	case solana.Instruction:
+		ins, err = instructionToTransactionInstruction2(v)
+	case Instruction:
+		ins, err = instructionToTransactionInstruction(v)
+	default:
+		err = InvalidType
 	}
-	data, err := ins.Data()
+	if ins != nil {
+		t.AddInstructions(*ins)
+	}
+	return err
+}
+
+// AddInsBuilder add instruction from builder
+// the builder has method ValidateAndBuild() (Instruction, error)
+func (t *Transaction) AddInsBuilder(builder interface {
+	Validate() error
+}) error {
+	ins, err := adapterInstructionTo(builder)
 	if err != nil {
 		return err
 	}
-	t.AddInstruction(keys, PublicKey(ins.ProgramID()), data)
-	return nil
-}
-
-func (t *Transaction) AddInstruction4(ins Instruction) error {
-	var keys []AccountMeta
-	for _, item := range ins.Accounts() {
-		keys = append(keys, *item)
-	}
-	data, err := ins.Data()
-	if err != nil {
-		return err
-	}
-	t.AddInstruction(keys, ins.ProgramID(), data)
+	t.AddInstructions(*ins)
 	return nil
 }
 

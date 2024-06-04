@@ -65,7 +65,7 @@ func (impl LoaderImpl) Load(connection Connection, payer Signer, program Signer,
 
 			if len(programInfo.Data.Content) != len(data) {
 				tryNewTransaction()
-				err = transaction.AddInstruction3(system.NewAllocateInstruction(uint64(len(data)), program.PublicKey().D()).Build())
+				err = transaction.AddInsBuilder(system.NewAllocateInstruction(uint64(len(data)), program.PublicKey().D()))
 				if err != nil {
 					return false, err
 				}
@@ -73,7 +73,7 @@ func (impl LoaderImpl) Load(connection Connection, payer Signer, program Signer,
 
 			if !programInfo.Owner.Equals(programId) {
 				tryNewTransaction()
-				err = transaction.AddInstruction3(system.NewAssignInstruction(program.PublicKey().D(), program.PublicKey().D()).Build())
+				err = transaction.AddInsBuilder(system.NewAssignInstruction(program.PublicKey().D(), program.PublicKey().D()))
 				if err != nil {
 					return false, err
 				}
@@ -81,7 +81,7 @@ func (impl LoaderImpl) Load(connection Connection, payer Signer, program Signer,
 
 			if programInfo.Lamports < balanceNeeded {
 				tryNewTransaction()
-				err = transaction.AddInstruction3(system.NewTransferInstruction(balanceNeeded-programInfo.Lamports, payer.PublicKey().D(), program.PublicKey().D()).Build())
+				err = transaction.AddInsBuilder(system.NewTransferInstruction(balanceNeeded-programInfo.Lamports, payer.PublicKey().D(), program.PublicKey().D()))
 				if err != nil {
 					return false, err
 				}
@@ -92,9 +92,11 @@ func (impl LoaderImpl) Load(connection Connection, payer Signer, program Signer,
 			if balanceNeeded <= 0 {
 				balanceNeeded = 1
 			}
-			err = transaction.AddInstruction3(system.NewCreateAccountInstruction(
-				lamports, uint64(len(data)), programId.D(), payer.PublicKey().D(), program.PublicKey().D(),
-			).Build())
+			err = transaction.AddInsBuilder(
+				system.NewCreateAccountInstruction(
+					lamports, uint64(len(data)), programId.D(), payer.PublicKey().D(), program.PublicKey().D(),
+				),
+			)
 			if err != nil {
 				return false, err
 			}
@@ -128,6 +130,7 @@ func (impl LoaderImpl) Load(connection Connection, payer Signer, program Signer,
 		out = append(out, bs[:]...)
 
 		transaction := Transaction{}
+
 		transaction.AddInstruction([]AccountMeta{
 			{Pubkey: program.PublicKey(), IsSigner: true, IsWritable: true},
 		}, programId, out)
