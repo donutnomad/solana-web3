@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"github.com/donutnomad/solana-web3/example/common"
 	"github.com/donutnomad/solana-web3/web3"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/donutnomad/solana-web3/web3kit"
 )
 
 func main() {
-	var commitment = web3.CommitmentConfirmed
+	var commitment = web3.CommitmentProcessed
 	client, err := web3.NewConnection(web3.Devnet.Url(), &web3.ConnectionConfig{
 		Commitment: &commitment,
 	})
@@ -19,8 +18,7 @@ func main() {
 	}
 
 	var from = common.GetYourPrivateKey()
-	// generate a random public key
-	var to = web3.Keypair.Generate().PublicKey()
+	var to = web3.Keypair.Generate().PublicKey() // generate a random public key
 	var amount = web3.LAMPORTS_PER_SOL
 
 	// check balance
@@ -40,28 +38,14 @@ func main() {
 		}
 	}
 
-	// transaction
-	var ins = system.NewTransferInstruction(
-		amount, solana.PublicKey(from.PublicKey()), solana.PublicKey(to),
-	).Build()
-	var transaction = web3.Transaction{}
-	err = transaction.AddInstruction3(ins)
+	signature, err := web3kit.Token.Transfer(context.Background(), client, from, from, to, web3.PublicKey{}, amount, web3.SystemProgramID, true, web3.ConfirmOptions{
+		SkipPreflight:       web3.Ref(false),
+		PreflightCommitment: &commitment,
+		Commitment:          &commitment,
+	})
 	if err != nil {
 		panic(err)
 	}
-	transaction.SetFeePayer(from.PublicKey())
-
-	// send and confirm transaction
-	signature, err := client.SendAndConfirmTransaction(context.Background(), transaction,
-		[]web3.Signer{from}, web3.ConfirmOptions{
-			SkipPreflight:       web3.Ref(false),
-			PreflightCommitment: &web3.CommitmentProcessed,
-			Commitment:          &web3.CommitmentProcessed,
-		})
-	if err != nil {
-		panic(err)
-	}
-
 	fmt.Println("Transfer SOL")
 	fmt.Printf("From: %s, To: %s,  Amount: %d\n", from, to, amount)
 	fmt.Println("Signature:", signature)

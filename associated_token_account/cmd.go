@@ -2,6 +2,15 @@ package associated_token_account
 
 import "github.com/donutnomad/solana-web3/web3"
 
+func FindAssociatedTokenAddress(
+	walletAddress web3.PublicKey,
+	mint web3.PublicKey,
+	programId web3.PublicKey,
+) (web3.PublicKey, error) {
+	a, _, err := FindAssociatedTokenAddressAndBumpSeed(walletAddress, mint, programId)
+	return a, err
+}
+
 func FindAssociatedTokenAddressAndBumpSeed(
 	walletAddress web3.PublicKey,
 	mint web3.PublicKey,

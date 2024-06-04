@@ -2125,7 +2125,7 @@ func (c *Connection) SendEncodedTransaction(encodedTransaction string, options S
 				Logs []string `json:"logs"`
 			}
 			_ = json.Unmarshal(v.Err.Data, &d)
-			return "", NewSendTransactionError(fmt.Sprintf("failed to send transaction: %s", err.Error()), d.Logs)
+			return "", NewSendTransactionError(err.Error(), d.Logs, v.Err.Code)
 		}
 		return "", err
 	}

@@ -93,6 +93,12 @@ func (t *Transaction) SetFeePayer(payer PublicKey) {
 	t.feePayer = &payer
 }
 
+func (t *Transaction) ExportIns() []TransactionInstruction {
+	var instructions = make([]TransactionInstruction, len(t.instructions))
+	copy(instructions, t.instructions)
+	return instructions
+}
+
 func (t *Transaction) Sign(signers ...Signer) error {
 	// dedupe signers
 	seen := make(map[string]bool)

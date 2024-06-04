@@ -9,17 +9,19 @@ import (
 type SendTransactionError struct {
 	Logs    []string
 	Message string
+	Code    int
 }
 
-func NewSendTransactionError(message string, logs []string) SendTransactionError {
+func NewSendTransactionError(message string, logs []string, code int) SendTransactionError {
 	return SendTransactionError{
 		logs,
 		message,
+		code,
 	}
 }
 
 func (e SendTransactionError) Error() string {
-	return e.Message + "\n" + strings.Join(e.Logs, "\n")
+	return fmt.Sprintf("%d: %s [%s]", e.Code, e.Message, strings.Join(e.Logs, "\n"))
 }
 
 type RpcResponseError struct {
@@ -38,7 +40,11 @@ func (e SolanaJSONRPCError) Code() int {
 }
 
 func (e SolanaJSONRPCError) Error() string {
-	return fmt.Sprintf("%s: %s", e.CustomMessage, e.Err.Message)
+	if len(e.CustomMessage) == 0 {
+		return e.Err.Message
+	} else {
+		return fmt.Sprintf("%s: %s", e.CustomMessage, e.Err.Message)
+	}
 }
 
 type SolanaJSONRPCErrorCode int
