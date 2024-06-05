@@ -2294,6 +2294,13 @@ func (c *Connection) GetStakeMinimumDelegation(config GetStakeMinimumDelegationC
 	return requestContext[uint64](context.Background(), c, "getStakeMinimumDelegation", args, "failed to get stake minimum delegation")
 }
 
+func (c *Connection) Close() {
+	c.wsClient.Close()
+	c.rpcClient.CloseIdleConnections()
+	c.rpcClient = nil
+	c.wsClient = nil
+}
+
 func requestContextValue[T any](ctx context.Context, connection *Connection, method string, args []any, customErrMessage string) (de T, err error) {
 	res, err := requestContext[T](ctx, connection, method, args, customErrMessage)
 	if err != nil {

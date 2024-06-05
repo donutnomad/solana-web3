@@ -127,7 +127,7 @@ func (p PublicKey) D() solana.PublicKey {
 	return solana.PublicKey(p)
 }
 
-func (p *PublicKey) D2() *PublicKey {
+func (p *PublicKey) Ref() *PublicKey {
 	if p != nil {
 		return p
 	}
