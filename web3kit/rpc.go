@@ -1,7 +1,9 @@
 package web3kit
 
 import (
+	"context"
 	"encoding/binary"
+	ata "github.com/donutnomad/solana-web3/associated_token_account"
 	"github.com/donutnomad/solana-web3/spl_token_2022"
 	"github.com/donutnomad/solana-web3/web3"
 )
@@ -101,4 +103,45 @@ func GetProgramAccountFilters(option GetProgramAccountsOption) []web3.GetProgram
 		panic("invalid offset")
 	}
 	return filters
+}
+
+func BuildAssociatedAccountCreationInstructions(
+	ctx context.Context,
+	connection *web3.Connection,
+	payer web3.Signer,
+	mint web3.PublicKey,
+	owners []web3.PublicKey,
+	tokenProgramId, associatedTokenProgramId web3.PublicKey,
+	commitment web3.Commitment,
+) ([]web3.Instruction, error) {
+	_ = ctx
+	accounts := Map(owners, func(_ int, owner web3.PublicKey) web3.PublicKey {
+		x, _ := Must2(ata.FindAssociatedTokenAddressAndBumpSeed2(owner, mint, tokenProgramId, associatedTokenProgramId))
+		return x
+	})
+	infos, err := connection.GetMultipleAccountsInfo(accounts, web3.GetMultipleAccountsConfig{
+		Commitment: &commitment,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var instructions = make([]web3.Instruction, 0, len(infos))
+	for idx, info := range infos {
+		if info != nil {
+			continue
+		}
+		ins, err := ata.NewCreateInstruction(
+			payer.PublicKey(),
+			accounts[idx],
+			owners[idx],
+			mint,
+			web3.SystemProgramID,
+			tokenProgramId,
+		).ValidateAndBuild()
+		if err != nil {
+			return nil, err
+		}
+		instructions = append(instructions, ins)
+	}
+	return instructions, nil
 }

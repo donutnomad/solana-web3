@@ -119,6 +119,50 @@ func (tokenKit) GetTransferInstructions(
 	return tx.ExportIns(), nil
 }
 
+func (t tokenKit) GetMint(
+	ctx context.Context,
+	connection *web3.Connection,
+	mint, programId web3.PublicKey,
+	config web3.GetAccountInfoConfig,
+) (*MintInfo, error) {
+	return Token2022.GetMint(ctx, connection, mint, programId, config)
+}
+
+func (t tokenKit) ParseMint(data []byte) (*spltoken2022.Mint, error) {
+	return Token2022.ParseMint(data)
+}
+
+func (t tokenKit) UnpackMint(mintAddress web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*MintInfo, error) {
+	return Token2022.UnpackMint(mintAddress, info, programId)
+}
+
+func (t tokenKit) GetTokenAccount(
+	ctx context.Context,
+	connection *web3.Connection,
+	account, programId web3.PublicKey,
+	config web3.GetAccountInfoConfig,
+) (*TokenAccount, error) {
+	return Token2022.GetTokenAccount(ctx, connection, account, programId, config)
+}
+
+func (t tokenKit) ParseTokenAccount(data []byte) (*spltoken2022.Account, error) {
+	return Token2022.ParseTokenAccount(data)
+}
+
+func (t tokenKit) UnpackTokenAccount(tokenAccount web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*TokenAccount, error) {
+	return Token2022.UnpackTokenAccount(tokenAccount, info, programId)
+}
+
+func (t tokenKit) FindTokenAccounts(
+	ctx context.Context,
+	connection *web3.Connection,
+	mint, programId web3.PublicKey,
+	option GetProgramAccountsOption,
+	commitment web3.Commitment,
+) ([]ProgramAccount, error) {
+	return Token2022.FindTokenAccounts(ctx, connection, mint, programId, option, commitment)
+}
+
 var convertPublicKey = func(i int, t web3.PublicKey) solana.PublicKey {
 	return t.D()
 }

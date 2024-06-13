@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	ata "github.com/donutnomad/solana-web3/associated_token_account"
 	. "github.com/donutnomad/solana-web3/spl_token_2022"
@@ -208,12 +207,7 @@ func (t tokenKit2022) IsMintExtension(e ExtensionType) bool {
 	}
 }
 
-var InvalidAccountSizeErr = errors.New("InvalidAccountSizeErr")
-var TokenAccountNotFoundErr = errors.New("TokenAccountNotFoundErr")
-var TokenInvalidAccountOwnerErr = errors.New("TokenInvalidAccountOwnerErr")
-var TokenInvalidMintErr = errors.New("TokenInvalidMintErr")
-
-type Mint2022 struct {
+type MintInfo struct {
 	Mint
 	Address web3.PublicKey // address of the mint
 	TlvData []byte         // Additional data for extension
@@ -224,7 +218,7 @@ func (t tokenKit2022) GetMint(
 	connection *web3.Connection,
 	mint, programId web3.PublicKey,
 	config web3.GetAccountInfoConfig,
-) (*Mint2022, error) {
+) (*MintInfo, error) {
 	_ = ctx
 	info, err := connection.GetAccountInfo(mint, config)
 	if err != nil {
@@ -240,7 +234,7 @@ func (t tokenKit2022) ParseMint(data []byte) (*Mint, error) {
 	return decodeObject[*Mint](data[0:MINT_SIZE])
 }
 
-func (t tokenKit2022) UnpackMint(mintAddress web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*Mint2022, error) {
+func (t tokenKit2022) UnpackMint(mintAddress web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*MintInfo, error) {
 	if info == nil {
 		return nil, TokenAccountNotFoundErr
 	}
@@ -252,7 +246,7 @@ func (t tokenKit2022) UnpackMint(mintAddress web3.PublicKey, info *web3.AccountI
 	if err != nil {
 		return nil, err
 	}
-	var ret = &Mint2022{
+	var ret = &MintInfo{
 		Address: mintAddress,
 		Mint:    *raw,
 	}
@@ -271,7 +265,7 @@ func (t tokenKit2022) UnpackMint(mintAddress web3.PublicKey, info *web3.AccountI
 	return ret, nil
 }
 
-type TokenAccount2022 struct {
+type TokenAccount struct {
 	Account
 	Address web3.PublicKey // address of the token
 	TlvData []byte         // Additional data for extension
@@ -282,7 +276,7 @@ func (t tokenKit2022) GetTokenAccount(
 	connection *web3.Connection,
 	account, programId web3.PublicKey,
 	config web3.GetAccountInfoConfig,
-) (*TokenAccount2022, error) {
+) (*TokenAccount, error) {
 	_ = ctx
 	info, err := connection.GetAccountInfo(account, config)
 	if err != nil {
@@ -298,7 +292,7 @@ func (t tokenKit2022) ParseTokenAccount(data []byte) (*Account, error) {
 	return decodeObject[*Account](data[0:ACCOUNT_SIZE])
 }
 
-func (t tokenKit2022) UnpackTokenAccount(tokenAccount web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*TokenAccount2022, error) {
+func (t tokenKit2022) UnpackTokenAccount(tokenAccount web3.PublicKey, info *web3.AccountInfoD, programId web3.PublicKey) (*TokenAccount, error) {
 	if info == nil {
 		return nil, TokenAccountNotFoundErr
 	}
@@ -310,7 +304,7 @@ func (t tokenKit2022) UnpackTokenAccount(tokenAccount web3.PublicKey, info *web3
 	if err != nil {
 		return nil, err
 	}
-	var ret = &TokenAccount2022{
+	var ret = &TokenAccount{
 		Address: tokenAccount,
 		Account: *raw,
 	}

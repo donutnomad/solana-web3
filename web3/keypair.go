@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"github.com/donutnomad/solana-web3/web3/utils"
 	"github.com/gagliardetto/solana-go"
 	"github.com/mr-tron/base58"
 	"os"
@@ -14,6 +15,18 @@ import (
 type Signer interface {
 	Sign(data []byte) ([64]byte, error)
 	PublicKey() PublicKey
+}
+
+type SignerSlice []Signer
+
+func (s SignerSlice) Addresses() []PublicKey {
+	return utils.Map(s, func(t Signer) PublicKey {
+		return t.PublicKey()
+	})
+}
+
+func (s SignerSlice) Len() int {
+	return len(s)
 }
 
 var Keypair keypair

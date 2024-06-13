@@ -1,6 +1,9 @@
 package web3kit
 
-import binary "github.com/gagliardetto/binary"
+import (
+	binary "github.com/gagliardetto/binary"
+	"reflect"
+)
 
 func Recover(err *error) {
 	if r := recover(); r != nil {
@@ -58,7 +61,7 @@ func decodeObject[T binary.BinaryUnmarshaler](data []byte) (T, error) {
 	if len(data) == 0 {
 		return zero, nil
 	}
-	var ret T
+	ret := reflect.New(reflect.TypeOf(zero).Elem()).Interface().(T)
 	if err := decode(data, ret); err != nil {
 		return zero, err
 	}
