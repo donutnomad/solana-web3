@@ -1,6 +1,7 @@
 package web3kit
 
 import (
+	"bytes"
 	binary "github.com/gagliardetto/binary"
 	"reflect"
 )
@@ -66,4 +67,31 @@ func decodeObject[T binary.BinaryUnmarshaler](data []byte) (T, error) {
 		return zero, err
 	}
 	return ret, nil
+}
+
+func DeDupBy[T comparable, K comparable, TS ~[]T](input TS, selector func(T) K) []T {
+	var m = make(map[K]bool, len(input))
+	var n = make([]T, 0, len(m))
+	for _, item := range input {
+		key := selector(item)
+		if _, ok := m[key]; !ok {
+			m[key] = true
+			n = append(n, item)
+		}
+	}
+	return n
+}
+
+func GetSize(input binary.BinaryMarshaler) int {
+	return len(GetBytes(input))
+}
+
+func GetBytes(input binary.BinaryMarshaler) []byte {
+	var o = bytes.NewBuffer(nil)
+	var encoder = binary.NewEncoderWithEncoding(o, binary.EncodingBorsh)
+	err := input.MarshalWithEncoder(encoder)
+	if err != nil {
+		panic(err)
+	}
+	return o.Bytes()
 }
