@@ -14,6 +14,7 @@ easy-to-use API for building applications on the Solana network using Go.
 - Token2022 Extensions
 - Metaplex Token Metadata
 - Transaction creation and signing
+- Easy to create a Token
 
 ## Installation
 

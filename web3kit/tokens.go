@@ -8,6 +8,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
+	"strings"
 )
 
 var Token = tokenKit{}
@@ -161,6 +162,26 @@ func (t tokenKit) FindTokenAccounts(
 	commitment web3.Commitment,
 ) ([]ProgramAccount, error) {
 	return Token2022.FindTokenAccounts(ctx, connection, mint, programId, option, commitment)
+}
+
+func (t tokenKit) GetTokenName(ctx context.Context, connection *web3.Connection, mint web3.PublicKey, commitment *web3.Commitment) (name, symbol, uri string, err error) {
+	defer Recover(&err)
+	metaplexMetadata := Must1(MetaPlex.GetMetadata(ctx, connection, mint, commitment))
+	clear_ := func(input string) string {
+		return strings.TrimRight(input, "\u0000")
+	}
+	if metaplexMetadata != nil {
+		d := metaplexMetadata.Data
+		return clear_(d.Name), clear_(d.Symbol), clear_(d.Uri), nil
+	} else {
+		metadata := Must1(Token2022.GetTokenMetadata(ctx, connection, mint, web3.TokenProgram2022ID, web3.GetAccountInfoConfig{
+			Commitment: commitment,
+		}))
+		if metadata != nil {
+			return clear_(metadata.Name), clear_(metadata.Symbol), clear_(metadata.Uri), nil
+		}
+	}
+	return "", "", "", nil
 }
 
 var convertPublicKey = func(i int, t web3.PublicKey) solana.PublicKey {
