@@ -1,7 +1,8 @@
-package spl_token_2022
+package extension
 
 import (
 	"errors"
+	. "github.com/donutnomad/solana-web3/spl_token_2022"
 	"github.com/donutnomad/solana-web3/spl_token_2022/extension/cpi_guard"
 	"github.com/donutnomad/solana-web3/spl_token_2022/extension/default_account_state"
 	"github.com/donutnomad/solana-web3/spl_token_2022/extension/group_member_pointer"
