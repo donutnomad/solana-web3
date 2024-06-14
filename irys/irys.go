@@ -67,16 +67,16 @@ func (i *IrysNode) UploadData(ctx context.Context, connection *web3.Connection, 
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	web3kit.Must(i.FundByBytes(ctx, connection, signer, len(data)))
+	Must(i.FundByBytes(ctx, connection, signer, len(data)))
 	return i.Upload(data, signer, map[string]string{
 		"Content-Type": contentType,
 	})
 }
 
 func (i *IrysNode) UploadJson(ctx context.Context, connection *web3.Connection, signer web3.Signer, data any) (_ *UploadResponse, err error) {
-	defer web3kit.Recover(&err)
-	marshal := web3kit.Must1(json.Marshal(data))
-	web3kit.Must(i.FundByBytes(ctx, connection, signer, len(marshal)))
+	defer Recover(&err)
+	marshal := Must1(json.Marshal(data))
+	Must(i.FundByBytes(ctx, connection, signer, len(marshal)))
 	return i.Upload(marshal, signer, map[string]string{
 		"Content-Type": "application/json",
 	})
@@ -97,10 +97,10 @@ func (i *IrysNode) FundByBytes(ctx context.Context, connection *web3.Connection,
 	})
 }
 
-func (i *IrysNode) Upload(data []byte, signer web3.Signer, tags map[string]string) (out *UploadResponse, err error) {
-	defer web3kit.Recover(&err)
+func (i *IrysNode) Upload(data []byte, signer web3.Signer, tags map[string]string) (_ *UploadResponse, err error) {
+	defer Recover(&err)
 	if len(data) > 50_000_000 {
-		web3kit.Must(errors.New("data too big"))
+		Must(errors.New("data too big"))
 	}
 	var tags_ []Tag
 	for key, value := range tags {
@@ -110,9 +110,10 @@ func (i *IrysNode) Upload(data []byte, signer web3.Signer, tags map[string]strin
 		})
 	}
 	var tx = createTransaction(data, tags_)
-	web3kit.Must(tx.Sign(signer))
-	web3kit.Must(i.postTransaction(web3kit.Must1(tx.asBytes()), out))
-	return
+	Must(tx.Sign(signer))
+	var out UploadResponse
+	Must(i.postTransaction(Must1(tx.asBytes()), &out))
+	return &out, nil
 }
 
 // GetPrice calculates the price for [bytes] bytes paid for with [token] for the loaded Irys node.
@@ -136,11 +137,11 @@ func (i *IrysNode) GetBalance(address string) (uint64, error) {
 }
 
 func (i *IrysNode) Fund(ctx context.Context, transfer func(to web3.PublicKey) (web3.TransactionSignature, error)) (err error) {
-	defer web3kit.Recover(&err)
-	to := web3kit.Must1(i.getBundlerAddress(i.token))
-	sig := web3kit.Must1(transfer(*to))
+	defer Recover(&err)
+	to := Must1(i.getBundlerAddress(i.token))
+	sig := Must1(transfer(*to))
 	if !sig.IsZero() {
-		if web3kit.Must1(i.submitTransaction(ctx, sig.String())) == nil {
+		if Must1(i.submitTransaction(ctx, sig.String())) == nil {
 			err = fmt.Errorf("failed to post funding tx - %s - keep this id!\n", sig.String())
 		}
 	} else {
@@ -250,16 +251,16 @@ func (i *IrysNode) getBundlerAddress(token string) (*web3.PublicKey, error) {
 }
 
 func (i *IrysNode) get(url string, context string) (_ []byte, err error) {
-	defer web3kit.Recover(&err)
-	res := web3kit.Must1(i.HttpClient.Get(url))
+	defer Recover(&err)
+	res := Must1(i.HttpClient.Get(url))
 	defer res.Body.Close()
-	web3kit.Must(checkAndThrow(res, context, nil))
+	Must(checkAndThrow(res, context, nil))
 	return io.ReadAll(res.Body)
 }
 
 func (i *IrysNode) getObj(url string, context string, obj any) (err error) {
-	defer web3kit.Recover(&err)
-	return json.Unmarshal(web3kit.Must1(i.get(url, context)), obj)
+	defer Recover(&err)
+	return json.Unmarshal(Must1(i.get(url, context)), obj)
 }
 
 func parseInt(s string) (*big.Int, error) {
@@ -327,4 +328,31 @@ func sniffImageFormat(bs []byte) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func Recover(err *error) {
+	if r := recover(); r != nil {
+		if e, ok := r.(error); ok {
+			*err = e
+		} else {
+			panic(r)
+		}
+	}
+}
+func Must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+func Must1[T any](arg T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return arg
+}
+func Must2[T any, T2 any](arg T, arg2 T2, err error) (T, T2) {
+	if err != nil {
+		panic(err)
+	}
+	return arg, arg2
 }
