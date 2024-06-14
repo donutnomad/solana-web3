@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/donutnomad/solana-web3/example/common"
+	"github.com/donutnomad/solana-web3/test"
 	"github.com/donutnomad/solana-web3/web3"
 	"github.com/donutnomad/solana-web3/web3kit"
 )
@@ -17,7 +18,7 @@ func main() {
 		panic(err)
 	}
 
-	var from = common.GetYourPrivateKey()
+	var from = test.GetYourPrivateKey()
 	var to = web3.Keypair.Generate().PublicKey() // generate a random public key
 	var amount = web3.LAMPORTS_PER_SOL
 

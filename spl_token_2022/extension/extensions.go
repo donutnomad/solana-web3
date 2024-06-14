@@ -26,16 +26,16 @@ type GroupMemberPointerParams struct {
 func NewGroupMemberPointerParamsUpdate(
 	memberAddress web3.PublicKey,
 	mint web3.PublicKey,
-	authority web3.PublicKey) *GroupMemberPointerParams {
+	authority web3.PublicKey) GroupMemberPointerParams {
 	update := group_member_pointer.NewUpdateInstruction(memberAddress, mint, authority)
-	return &GroupMemberPointerParams{Update: update}
+	return GroupMemberPointerParams{Update: update}
 }
 
 func NewGroupMemberPointerParamsInitialize(authority web3.PublicKey,
 	memberAddress web3.PublicKey,
-	mint web3.PublicKey) *GroupMemberPointerParams {
+	mint web3.PublicKey) GroupMemberPointerParams {
 	initialize := group_member_pointer.NewInitializeInstruction(authority, memberAddress, mint)
-	return &GroupMemberPointerParams{Initialize: initialize}
+	return GroupMemberPointerParams{Initialize: initialize}
 }
 
 func (m GroupMemberPointerParams) ExtensionType() ExtensionType {
@@ -49,16 +49,16 @@ type GroupPointerParams struct {
 
 func NewGroupPointerParamsUpdate(groupAddress web3.PublicKey,
 	mint web3.PublicKey,
-	authority web3.PublicKey) *GroupPointerParams {
+	authority web3.PublicKey) GroupPointerParams {
 	update := group_pointer.NewUpdateInstruction(groupAddress, mint, authority)
-	return &GroupPointerParams{Update: update}
+	return GroupPointerParams{Update: update}
 }
 
 func NewGroupPointerParamsInitialize(authority web3.PublicKey,
 	groupAddress web3.PublicKey,
-	mint web3.PublicKey) *GroupPointerParams {
+	mint web3.PublicKey) GroupPointerParams {
 	initialize := group_pointer.NewInitializeInstruction(authority, groupAddress, mint)
-	return &GroupPointerParams{Initialize: initialize}
+	return GroupPointerParams{Initialize: initialize}
 }
 
 func (m GroupPointerParams) ExtensionType() ExtensionType {
@@ -71,8 +71,8 @@ type CpiGuardParams struct {
 	Owner   web3.PublicKey
 }
 
-func NewCpiGuardParams(enable bool, account web3.PublicKey, owner web3.PublicKey) *CpiGuardParams {
-	return &CpiGuardParams{Enable: enable, Account: account, Owner: owner}
+func NewCpiGuardParams(enable bool, account web3.PublicKey, owner web3.PublicKey) CpiGuardParams {
+	return CpiGuardParams{Enable: enable, Account: account, Owner: owner}
 }
 
 func (m CpiGuardParams) ExtensionType() ExtensionType {
@@ -83,8 +83,8 @@ type NonTransferableParams struct {
 	Mint web3.PublicKey
 }
 
-func NewNonTransferableParams(mint web3.PublicKey) *NonTransferableParams {
-	return &NonTransferableParams{Mint: mint}
+func NewNonTransferableParams(mint web3.PublicKey) NonTransferableParams {
+	return NonTransferableParams{Mint: mint}
 }
 
 func (m NonTransferableParams) ExtensionType() ExtensionType {
@@ -95,8 +95,8 @@ type ImmutableOwnerParams struct {
 	Account web3.PublicKey
 }
 
-func NewImmutableOwnerParams(account web3.PublicKey) *ImmutableOwnerParams {
-	return &ImmutableOwnerParams{Account: account}
+func NewImmutableOwnerParams(account web3.PublicKey) ImmutableOwnerParams {
+	return ImmutableOwnerParams{Account: account}
 }
 
 func (m ImmutableOwnerParams) ExtensionType() ExtensionType {
@@ -110,8 +110,8 @@ type MemoTransferParams struct {
 	MultiSigners []web3.PublicKey
 }
 
-func NewMemoTransferParams(enable bool, account web3.PublicKey, accountOwner web3.PublicKey, multiSigners ...web3.PublicKey) *MemoTransferParams {
-	return &MemoTransferParams{Enable: enable, Account: account, AccountOwner: accountOwner, MultiSigners: multiSigners}
+func NewMemoTransferParams(enable bool, account web3.PublicKey, accountOwner web3.PublicKey, multiSigners ...web3.PublicKey) MemoTransferParams {
+	return MemoTransferParams{Enable: enable, Account: account, AccountOwner: accountOwner, MultiSigners: multiSigners}
 }
 
 func (m MemoTransferParams) ExtensionType() ExtensionType {
@@ -210,16 +210,16 @@ type TransferHookParams struct {
 
 func NewTransferHookParamsUpdate(programId web3.PublicKey,
 	mint web3.PublicKey,
-	authority web3.PublicKey) *TransferHookParams {
+	authority web3.PublicKey) TransferHookParams {
 	update := transfer_hook.NewUpdateInstruction(programId, mint, authority)
-	return &TransferHookParams{Update: update}
+	return TransferHookParams{Update: update}
 }
 
 func NewTransferHookParamsInitialize(authority web3.PublicKey,
 	programId web3.PublicKey,
-	mint web3.PublicKey) *TransferHookParams {
+	mint web3.PublicKey) TransferHookParams {
 	initialize := transfer_hook.NewInitializeInstruction(authority, programId, mint)
-	return &TransferHookParams{Initialize: initialize}
+	return TransferHookParams{Initialize: initialize}
 }
 
 func (p TransferHookParams) ExtensionType() ExtensionType {
@@ -235,17 +235,17 @@ func NewMetadataPointerParamsUpdate(
 	metadataAddress web3.PublicKey,
 	mint web3.PublicKey,
 	owner web3.PublicKey,
-) *MetadataPointerParams {
+) MetadataPointerParams {
 	update := metadata_pointer.NewUpdateInstruction(metadataAddress, mint, owner)
-	return &MetadataPointerParams{Update: update}
+	return MetadataPointerParams{Update: update}
 }
 
 func NewMetadataPointerParamsInitialize(
 	authority *web3.PublicKey,
 	metadataAddress *web3.PublicKey,
-	mint web3.PublicKey) *MetadataPointerParams {
+	mint web3.PublicKey) MetadataPointerParams {
 	initialize := metadata_pointer.NewInitializeInstruction(nilDef(authority), nilDef(metadataAddress), mint)
-	return &MetadataPointerParams{Initialize: initialize}
+	return MetadataPointerParams{Initialize: initialize}
 }
 
 func nilDef[T any](a *T) T {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/donutnomad/solana-web3/example/common"
+	"github.com/donutnomad/solana-web3/test"
 	"github.com/donutnomad/solana-web3/web3"
 	"github.com/donutnomad/solana-web3/web3kit"
 )
@@ -23,7 +24,7 @@ func main() {
 	var mint = web3.MustPublicKey("FzVc5VPXfSQrPwEXMWFspaSeri682bHQps8easnJ1C92")
 	var amount uint64 = 10
 
-	var owner = common.GetYourPrivateKey()
+	var owner = test.GetYourPrivateKey()
 	var toOwner = web3.Keypair.Generate().PublicKey()
 
 	// send and confirm transaction

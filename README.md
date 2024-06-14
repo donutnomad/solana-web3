@@ -76,6 +76,8 @@ the [examples directory](https://github.com/donutnomad/solana-web3/tree/main/exa
 | [transfer_sol](https://github.com/donutnomad/solana-web3/tree/main/example/transfer_sol)               | An example to send SOL tokens.                                       |
 | [transfer_token](https://github.com/donutnomad/solana-web3/tree/main/example/transfer_token)           | An example to send SPL TOKEN tokens.                                 |
 | [transfer_token_2022](https://github.com/donutnomad/solana-web3/tree/main/example/transfer_token_2022) | An example to send SPL TOKEN 2022 tokens.                            |
+| [create_token](https://github.com/donutnomad/solana-web3/tree/main/example/create_token)               | An example to create solana token with metadata.                     |
+| [create_token_2022](https://github.com/donutnomad/solana-web3/tree/main/example/create_token_2022)     | An example to create solana token 2022 with metadata.                |
 
 ### Programs
 

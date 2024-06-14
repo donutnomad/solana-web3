@@ -1,5 +1,3 @@
 .idea
 *build*
 .env
-example/env.go
-irys/env.go

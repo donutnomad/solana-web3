@@ -150,7 +150,7 @@ func (t tokenKit2022) CreateMint(
 	if initialSupply != nil && *initialSupply > uint64(0) {
 		owner := mintAuthority.PublicKey
 		associatedTokenProgramId := web3.SPLAssociatedTokenAccountProgramID
-		associatedToken := Must1(ata.FindAssociatedTokenAddress(owner, mint, web3.TokenProgram2022ID))
+		associatedToken := Must1(ata.FindAssociatedTokenAddress(owner, mint, programId))
 		builder.AddInsBuilder(ata.NewCreateInstruction(
 			payer.PublicKey(),
 			associatedToken,
