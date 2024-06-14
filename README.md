@@ -21,7 +21,7 @@ easy-to-use API for building applications on the Solana network using Go.
 To install the library, use `go get`:
 
 ```sh
-go get github.com/donutnomad/solana-web3/
+go get -u github.com/donutnomad/solana-web3
 ```
 
 ## Web3
@@ -31,6 +31,7 @@ go get github.com/donutnomad/solana-web3/
 ```go
 package main
 
+import "context"
 import "github.com/donutnomad/solana-web3/web3"
 import "github.com/donutnomad/solana-web3/web3kit"
 
@@ -61,6 +62,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// get token name,symbol,logo
+	var mint = web3.MustPublicKey("FH3i2zWEZRKQVkdqKknkfXzYgrGSTcc48VnwoJduf2o1")
+	name, symbol, logo, err := web3kit.Token.GetTokenName(context.Background(),
+		client, mint, &web3.CommitmentProcessed,
+	)
+	if err != nil {
+		panic(err)
+	}
+	_ = name
+	_ = symbol
+	_ = logo
 }
 
 ```

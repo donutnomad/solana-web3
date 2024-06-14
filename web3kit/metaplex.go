@@ -53,5 +53,8 @@ func (m metaPlex) GetMetadata(ctx context.Context, connection *web3.Connection, 
 	if err != nil {
 		return nil, err
 	}
+	if info == nil {
+		return nil, nil
+	}
 	return m.ParseMetadata(info.Data.Content)
 }

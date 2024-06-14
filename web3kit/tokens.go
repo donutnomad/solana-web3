@@ -2,9 +2,11 @@ package web3kit
 
 import (
 	"context"
+	"errors"
 	ata "github.com/donutnomad/solana-web3/associated_token_account"
 	spltoken2022 "github.com/donutnomad/solana-web3/spl_token_2022"
 	"github.com/donutnomad/solana-web3/web3"
+	"github.com/donutnomad/solana-web3/web3kit/solanatokenlist"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
@@ -166,6 +168,12 @@ func (t tokenKit) FindTokenAccounts(
 
 func (t tokenKit) GetTokenName(ctx context.Context, connection *web3.Connection, mint web3.PublicKey, commitment *web3.Commitment) (name, symbol, uri string, err error) {
 	defer Recover(&err)
+
+	name, symbol, uri, ok := solanatokenlist.GetTokenInfo(mint.Base58())
+	if ok {
+		return
+	}
+
 	metaplexMetadata := Must1(MetaPlex.GetMetadata(ctx, connection, mint, commitment))
 	clear_ := func(input string) string {
 		return strings.TrimRight(input, "\u0000")
@@ -174,9 +182,14 @@ func (t tokenKit) GetTokenName(ctx context.Context, connection *web3.Connection,
 		d := metaplexMetadata.Data
 		return clear_(d.Name), clear_(d.Symbol), clear_(d.Uri), nil
 	} else {
-		metadata := Must1(Token2022.GetTokenMetadata(ctx, connection, mint, web3.TokenProgram2022ID, web3.GetAccountInfoConfig{
+		metadata, err := Token2022.GetTokenMetadata(ctx, connection, mint, web3.TokenProgram2022ID, web3.GetAccountInfoConfig{
 			Commitment: commitment,
-		}))
+		})
+		if err != nil {
+			if !(errors.Is(err, TokenAccountNotFoundErr) || errors.Is(err, TokenInvalidAccountOwnerErr)) {
+				return "", "", "", err
+			}
+		}
 		if metadata != nil {
 			return clear_(metadata.Name), clear_(metadata.Symbol), clear_(metadata.Uri), nil
 		}
