@@ -98,48 +98,23 @@ type RpcResponseAndContext[T any] struct {
 type SlotRpcResult[T any] struct {
 	JsonRPC string            `json:"jsonrpc"`
 	Id      int               `json:"id"`
-	Result  T                 `json:"result"`
-	Error   *RpcResponseError `json:"error"`
-
-	resultIsNil bool
-}
-
-type slotRpcResult[T any] struct {
-	JsonRPC string            `json:"jsonrpc"`
-	Id      int               `json:"id"`
-	Result  T                 `json:"result"`
+	Result  *T                `json:"result"`
 	Error   *RpcResponseError `json:"error"`
 }
 
-func (r *SlotRpcResult[T]) UnmarshalJSON(data []byte) error {
-	var m = make(map[string]any)
-	err := json.Unmarshal(data, &m)
-	var resultIsNil = false
-	if err == nil {
-		if v, ok := m["result"]; ok {
-			resultIsNil = v == nil
-		}
-	}
-	var e slotRpcResult[T]
-	err = json.Unmarshal(data, &e)
-	if err != nil {
-		return err
-	}
-
-	r.JsonRPC = e.JsonRPC
-	r.Id = e.Id
-	r.Result = e.Result
-	r.Error = e.Error
-	r.resultIsNil = resultIsNil
-
-	return nil
+func (r SlotRpcResult[T]) GetError() *RpcResponseError {
+	return r.Error
 }
 
 type RpcResponse[T any] struct {
-	JsonRPC string                   `json:"jsonrpc"`
-	Id      int                      `json:"id"`
-	Result  RpcResponseAndContext[T] `json:"result"`
-	Error   *RpcResponseError        `json:"error"`
+	JsonRPC string                    `json:"jsonrpc"`
+	Id      int                       `json:"id"`
+	Result  *RpcResponseAndContext[T] `json:"result"`
+	Error   *RpcResponseError         `json:"error"`
+}
+
+func (r RpcResponse[T]) GetError() *RpcResponseError {
+	return r.Error
 }
 
 // TransactionSignature represents a transaction signature
@@ -204,7 +179,7 @@ type Connection struct {
 	rpcWsEndpoint                    string
 	rpcClient                        *CustomClient
 	wsClient                         *ws.Client
-	rpcRequest                       func(ctx context.Context, methodName string, args []any) (string, error)
+	rpcRequest                       func(ctx context.Context, methodName string, args []any) (io.ReadCloser, error)
 
 	disableBlockhashCaching bool
 
@@ -253,10 +228,10 @@ func NewConnection(
 		conn.rpcWsEndpoint = wsEndpoint
 	}
 	conn.rpcClient = NewCustomClient(conn.rpcEndpoint, httpHeaders, disableRetryOnRateLimit)
-	conn.rpcRequest = func(ctx context.Context, methodName string, args []any) (string, error) {
+	conn.rpcRequest = func(ctx context.Context, methodName string, args []any) (io.ReadCloser, error) {
 		resp, err := conn.rpcClient.SendRequest(ctx, methodName, args)
 		if err != nil {
-			return "", fmt.Errorf("rpcRequest %s: %w", methodName, err)
+			return nil, fmt.Errorf("rpcRequest %s: %w", methodName, err)
 		}
 		return resp, nil
 	}
@@ -483,16 +458,16 @@ func (c *Connection) GetBlockCtx(ctx context.Context, slot uint64, config GetBlo
 		}
 	}
 
-	var txs []BlockResponseCommonTx[VersionedTransactionRet]
-	for _, item := range ret.Transactions {
-		txs = append(txs, BlockResponseCommonTx[VersionedTransactionRet]{
+	var txs = make([]BlockResponseCommonTx[VersionedTransactionRet], len(ret.Transactions))
+	for i, item := range ret.Transactions {
+		txs[i] = BlockResponseCommonTx[VersionedTransactionRet]{
 			Transaction: VersionedTransactionRet{
 				Message:    versionMessageFromResponse(item.Version, item.Transaction.Message),
 				Signatures: item.Transaction.Signatures,
 			},
 			Meta:    item.Meta,
 			Version: item.Version,
-		})
+		}
 	}
 	return &BlockResponse[VersionedTransactionRet]{
 		Blockhash:         ret.Blockhash,
@@ -2336,39 +2311,38 @@ func requestNonContext[T any](ctx context.Context, connection *Connection, metho
 	return createNonContext[T](unsafeRes, customErrMessage)
 }
 
-func createContext[T any](input string, customErrMessage string) (*RpcResponseAndContext[T], error) {
+func createContext[T any](input io.ReadCloser, customErrMessage string) (*RpcResponseAndContext[T], error) {
 	res, err := create[RpcResponse[T]](input, customErrMessage)
 	if err != nil {
 		return nil, err
 	}
-	return &res.Result, nil
+	return res.Result, nil
 }
 
-func createNonContext[T any](input string, customErrMessage string) (*T, error) {
+func createNonContext[T any](input io.ReadCloser, customErrMessage string) (*T, error) {
 	res, err := create[SlotRpcResult[T]](input, customErrMessage)
 	if err != nil {
 		return nil, err
 	}
-	if res.resultIsNil {
-		return nil, nil
-	}
-	return &res.Result, nil
+	return res.Result, nil
 }
 
-func create[T any](input string, customErrMessage string) (response T, err error) {
-	err = json.Unmarshal([]byte(input), &response)
+type ErrorProvider interface {
+	GetError() *RpcResponseError
+}
+
+func create[T ErrorProvider](r io.ReadCloser, customErrMessage string) (response T, err error) {
+	defer func() {
+		_ = r.Close()
+	}()
+	err = json.NewDecoder(r).Decode(&response)
 	if err != nil {
 		return
 	}
-	errorField, found := reflect.TypeOf(response).FieldByName("Error")
-	if found && errorField.Type == reflect.TypeOf((*RpcResponseError)(nil)) {
-		errorFieldValue := reflect.ValueOf(response).FieldByName("Error").Interface()
-		respErr := errorFieldValue.(*RpcResponseError)
-		if respErr != nil {
-			return response, SolanaJSONRPCError{
-				*respErr,
-				customErrMessage,
-			}
+	if respErr := response.GetError(); respErr != nil {
+		return response, SolanaJSONRPCError{
+			*respErr,
+			customErrMessage,
 		}
 	}
 	return response, nil
@@ -2401,7 +2375,7 @@ type RPCRequest struct {
 	JSONRPC string `json:"jsonrpc"`
 }
 
-func (client *CustomClient) SendRequest(ctx context.Context, method string, args []any) (string, error) {
+func (client *CustomClient) SendRequest(ctx context.Context, method string, args []any) (io.ReadCloser, error) {
 	request := &RPCRequest{
 		Method:  method,
 		JSONRPC: "2.0",
@@ -2409,17 +2383,22 @@ func (client *CustomClient) SendRequest(ctx context.Context, method string, args
 	if args != nil {
 		request.Params = args
 	}
-	body, err := json.Marshal(request)
+	var writer = requestBytesPool.Get().(*bytes.Buffer)
+	writer.Reset()
+	defer func() {
+		requestBytesPool.Put(writer)
+	}()
+	err := json.NewEncoder(writer).Encode(request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	const maxRetries = 5
 	waitTime := 500
 	var res *http.Response
 	for retries := 0; retries < maxRetries; retries++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.url, bytes.NewBuffer(body))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.url, writer)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		req.Header.Add("Content-Type", "application/json")
 		for key, value := range CommonHTTPHeaders {
@@ -2430,7 +2409,7 @@ func (client *CustomClient) SendRequest(ctx context.Context, method string, args
 		}
 		res, err = client.Do(req)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if res.StatusCode != http.StatusTooManyRequests {
 			break
@@ -2441,22 +2420,15 @@ func (client *CustomClient) SendRequest(ctx context.Context, method string, args
 		log.Printf("Server responded with %d %s. Retrying after %dms delay...\n", res.StatusCode, res.Status, waitTime)
 		select {
 		case <-ctx.Done():
-			return "", ctx.Err()
+			return nil, ctx.Err()
 		case <-time.After(time.Duration(waitTime) * time.Millisecond):
 			waitTime *= 2
 		}
 	}
-	defer func() {
-		_ = res.Body.Close()
-	}()
-	text, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
 	if res.StatusCode == http.StatusOK {
-		return string(text), nil
+		return res.Body, nil
 	} else {
-		return "", fmt.Errorf("%d %s: %s", res.StatusCode, res.Status, string(text))
+		return nil, fmt.Errorf("%d %s", res.StatusCode, res.Status)
 	}
 }
 

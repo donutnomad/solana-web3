@@ -7,13 +7,13 @@ import (
 )
 
 func TestConnection(t *testing.T) {
-	conn := Must1(NewConnection("http://127.0.0.1:8899", &ConnectionConfig{
-		Commitment: &CommitmentProcessed,
-	}))
-	//conn2 := Must1(NewConnection("https://api.devnet.solana.com", &ConnectionConfig{
+	//conn := Must1(NewConnection("http://127.0.0.1:8899", &ConnectionConfig{
 	//	Commitment: &CommitmentProcessed,
 	//}))
-	conn2 := conn
+	conn2 := Must1(NewConnection("https://api.devnet.solana.com", &ConnectionConfig{
+		Commitment: &CommitmentProcessed,
+	}))
+	conn := conn2
 	address := MustPublicKey("G7gLJ333oxdVJWXHShSvaMsEkp3MxyzCx2nDxq55h663")
 	mint := MustPublicKey("8YLk6K77BVa6gWk5B4Cf6BPM4pR1uVyMBW98uiosbbhp")
 
@@ -105,7 +105,8 @@ func TestConnection(t *testing.T) {
 		ret := Must1(conn.GetProgramAccounts(MustPublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"), GetProgramAccountsConfig{
 			//MinContextSlot: 229000,
 		}))
-		fmt.Println(ret)
+		_ = ret
+		//fmt.Println(ret)
 	})
 	t.Run("GetParsedProgramAccounts", func(t *testing.T) {
 		ret := Must1(conn.GetParsedProgramAccounts(MustPublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"), GetParsedProgramAccountsConfig{
@@ -247,8 +248,15 @@ func TestConnection(t *testing.T) {
 		ret := Must1(conn.GetTransaction("q4C1xjwCvgiBcSwjctxtu7gz8dASHrZ1ktTWemUb2hWdtZBm4JBG8TjQY635mFYGH91zZTRLBpjhqyTmo6tgvte", GetVersionedTransactionConfig{
 			Commitment: &CommitmentFinalized,
 		}))
-		fmt.Println(ret)
-		fmt.Println(ret.Transaction.Message.Version())
+		if ret != nil {
+			fmt.Println(ret)
+			fmt.Println(ret.Transaction.Message.Version())
+		}
+	})
+
+	t.Run("GetBlock", func(t *testing.T) {
+		response := Must1(conn.GetBlock(Must1(conn.GetSlot(GetSlotConfig{}))-40, GetBlockConfig{}))
+		fmt.Println(response)
 	})
 }
 

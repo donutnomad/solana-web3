@@ -221,7 +221,7 @@ func NewMessage(args CompileLegacyArgs) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	var indexToProgramIds = make(map[int]PublicKey)
+	var indexToProgramIds = make(map[int]PublicKey, len(instructions))
 	for _, ix := range instructions {
 		indexToProgramIds[int(ix.ProgramIdIndex)] = staticAccountKeys[ix.ProgramIdIndex]
 	}
@@ -235,7 +235,7 @@ func NewMessage(args CompileLegacyArgs) (*Message, error) {
 }
 
 func (m *Message) inflate() {
-	var indexToProgramIds = make(map[int]PublicKey)
+	var indexToProgramIds = make(map[int]PublicKey, len(m.Instructions))
 	for _, ix := range m.Instructions {
 		indexToProgramIds[int(ix.ProgramIdIndex)] = m.AccountKeys[ix.ProgramIdIndex]
 	}
