@@ -190,6 +190,7 @@ type Connection struct {
 		TransactionSignatures []string
 	}
 	pollingBlockhash bool
+	Debug            bool
 }
 
 func NewConnection(
@@ -229,7 +230,7 @@ func NewConnection(
 	}
 	conn.rpcClient = NewCustomClient(conn.rpcEndpoint, httpHeaders, disableRetryOnRateLimit)
 	conn.rpcRequest = func(ctx context.Context, methodName string, args []any) (io.ReadCloser, error) {
-		resp, err := conn.rpcClient.SendRequest(ctx, methodName, args)
+		resp, err := conn.rpcClient.SendRequest(ctx, methodName, args, conn.Debug)
 		if err != nil {
 			return nil, fmt.Errorf("rpcRequest %s: %w", methodName, err)
 		}
@@ -723,9 +724,9 @@ func (c *Connection) GetAccountInfoAndContext(publicKey PublicKey, config GetAcc
 }
 
 // GetParsedAccountInfo Fetch parsed account info for the specified public key
-func (c *Connection) GetParsedAccountInfo(publicKey PublicKey, config GetAccountInfoConfig) (*RpcResponseAndContext[*AccountInfo[ParsedAccountData]], error) {
+func (c *Connection) GetParsedAccountInfo(publicKey PublicKey, config GetAccountInfoConfig) (*RpcResponseAndContext[*AccountInfo[ParsedAccountDataOrBytes]], error) {
 	args := c.buildArgs([]any{publicKey.Base58()}, config.Commitment, &EncodingJsonParsed, config)
-	return requestContext[*AccountInfo[ParsedAccountData]](context.Background(), c, "getAccountInfo", args, msg("failed to get info about account %s", publicKey))
+	return requestContext[*AccountInfo[ParsedAccountDataOrBytes]](context.Background(), c, "getAccountInfo", args, msg("failed to get info about account %s", publicKey))
 }
 
 // GetAccountInfo Fetch all the account info for the specified public key
@@ -2289,7 +2290,7 @@ func requestContext[T any](ctx context.Context, connection *Connection, methodNa
 	if err != nil {
 		return nil, err
 	}
-	return createContext[T](unsafeRes, customErrMessage)
+	return createContext[T](unsafeRes, customErrMessage, connection.Debug)
 }
 
 func requestNonContextValue[T any](ctx context.Context, connection *Connection, method string, args []any, customErrMessage string) (de T, err error) {
@@ -2308,19 +2309,19 @@ func requestNonContext[T any](ctx context.Context, connection *Connection, metho
 	if err != nil {
 		return
 	}
-	return createNonContext[T](unsafeRes, customErrMessage)
+	return createNonContext[T](unsafeRes, customErrMessage, connection.Debug)
 }
 
-func createContext[T any](input io.ReadCloser, customErrMessage string) (*RpcResponseAndContext[T], error) {
-	res, err := create[RpcResponse[T]](input, customErrMessage)
+func createContext[T any](input io.ReadCloser, customErrMessage string, debug bool) (*RpcResponseAndContext[T], error) {
+	res, err := create[RpcResponse[T]](input, customErrMessage, debug)
 	if err != nil {
 		return nil, err
 	}
 	return res.Result, nil
 }
 
-func createNonContext[T any](input io.ReadCloser, customErrMessage string) (*T, error) {
-	res, err := create[SlotRpcResult[T]](input, customErrMessage)
+func createNonContext[T any](input io.ReadCloser, customErrMessage string, debug bool) (*T, error) {
+	res, err := create[SlotRpcResult[T]](input, customErrMessage, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -2331,11 +2332,18 @@ type ErrorProvider interface {
 	GetError() *RpcResponseError
 }
 
-func create[T ErrorProvider](r io.ReadCloser, customErrMessage string) (response T, err error) {
+func create[T ErrorProvider](r io.ReadCloser, customErrMessage string, debug bool) (response T, err error) {
 	defer func() {
 		_ = r.Close()
 	}()
-	err = json.NewDecoder(r).Decode(&response)
+	all, err := io.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	if debug {
+		fmt.Println("debug:", string(all))
+	}
+	err = json.NewDecoder(bytes.NewReader(all)).Decode(&response)
 	if err != nil {
 		return
 	}
@@ -2375,7 +2383,7 @@ type RPCRequest struct {
 	JSONRPC string `json:"jsonrpc"`
 }
 
-func (client *CustomClient) SendRequest(ctx context.Context, method string, args []any) (io.ReadCloser, error) {
+func (client *CustomClient) SendRequest(ctx context.Context, method string, args []any, debug bool) (io.ReadCloser, error) {
 	request := &RPCRequest{
 		Method:  method,
 		JSONRPC: "2.0",
@@ -2391,6 +2399,9 @@ func (client *CustomClient) SendRequest(ctx context.Context, method string, args
 	err := json.NewEncoder(writer).Encode(request)
 	if err != nil {
 		return nil, err
+	}
+	if debug {
+		fmt.Println("debug-request:", writer.String())
 	}
 	const maxRetries = 5
 	waitTime := 500
@@ -2475,7 +2486,7 @@ func (bf *BigFloat) UnmarshalJSON(data []byte) error {
 }
 
 type ParsedAccountDataOrBytes struct {
-	Data     ParsedAccountData
+	ParsedAccountData
 	Bytes    []byte
 	Encoding string
 }
@@ -2487,6 +2498,6 @@ func (t *ParsedAccountDataOrBytes) UnmarshalJSON(data []byte) (err error) {
 		t.Encoding = string(array.Encoding)
 		return nil
 	} else {
-		return json.Unmarshal(data, &t.Data)
+		return json.Unmarshal(data, &t.ParsedAccountData)
 	}
 }
