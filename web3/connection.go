@@ -1076,7 +1076,7 @@ func (c *Connection) SendAndConfirmTransaction(
 			},
 		}, options.Commitment)
 		if err != nil {
-			return "", nil
+			return "", err
 		}
 		status = ret.Value
 	} else if transaction.MinNonceContextSlot != nil && transaction.NonceInfo != nil {
@@ -1088,13 +1088,13 @@ func (c *Connection) SendAndConfirmTransaction(
 			NonceValue:         transaction.NonceInfo.Nonce,
 		}, options.Commitment)
 		if err != nil {
-			return "", nil
+			return "", err
 		}
 		status = ret.Value
 	} else {
 		ret, err := c.ConfirmTransaction(ctx, signature, options.Commitment)
 		if err != nil {
-			return "", nil
+			return "", err
 		}
 		status = ret.Value
 	}
