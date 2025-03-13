@@ -83,16 +83,18 @@ func (i *IrysNode) UploadJson(ctx context.Context, connection *web3.Connection, 
 }
 
 func (i *IrysNode) FundByBytes(ctx context.Context, connection *web3.Connection, signer web3.Signer, bs int) error {
-	price, balanceForIrys, err := i.checkBalance(bs, signer.PublicKey())
-	_ = balanceForIrys
-	if errors.Is(err, InsufficientBalance) {
-		return err
+	price, _, err := i.checkBalance(bs, signer.PublicKey())
+	if err == nil {
+		return nil
 	}
-	return i.Fund(ctx, func(to web3.PublicKey) (web3.TransactionSignature, error) {
-		return web3kit.Token.Transfer(ctx, connection, signer, signer, to, web3.PublicKey{}, price*5, web3.SystemProgramID, true, web3.ConfirmOptions{
-			SkipPreflight: web3.Ref(true),
+	if errors.Is(err, InsufficientBalance) {
+		return i.Fund(ctx, func(to web3.PublicKey) (web3.TransactionSignature, error) {
+			return web3kit.Token.Transfer(ctx, connection, signer, signer, to, web3.PublicKey{}, price*5, web3.SystemProgramID, true, web3.ConfirmOptions{
+				SkipPreflight: web3.Ref(true),
+			})
 		})
-	})
+	}
+	return err
 }
 
 func (i *IrysNode) Upload(data []byte, signer web3.Signer, tags map[string]string) (_ *UploadResponse, err error) {
