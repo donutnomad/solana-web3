@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"fmt"
 	spew "github.com/davecgh/go-spew/spew"
+	binary "github.com/donutnomad/solana-web3/binary"
 	common "github.com/donutnomad/solana-web3/common"
-	binary "github.com/gagliardetto/binary"
 	solanago "github.com/gagliardetto/solana-go"
 	text "github.com/gagliardetto/solana-go/text"
 	treeout "github.com/gagliardetto/treeout"
@@ -46,21 +46,21 @@ var (
 	Instruction_Emit            = binary.TypeID([8]byte{250, 166, 180, 250, 13, 12, 184, 70})
 )
 
-var InstructionImplDef = binary.NewVariantDefinition(binary.AnchorTypeIDEncoding, []binary.VariantType{
+var InstructionImplDef = binary.NewVariantDefinitionAnchorType([]binary.VariantTypeHash{
 	{
-		"initialize", (*Initialize)(nil),
+		"initialize", "spl_token_metadata_interface:initialize_account", (*Initialize)(nil),
 	},
 	{
-		"update_field", (*UpdateField)(nil),
+		"update_field", "spl_token_metadata_interface:updating_field", (*UpdateField)(nil),
 	},
 	{
-		"remove_key", (*RemoveKey)(nil),
+		"remove_key", "spl_token_metadata_interface:remove_key_ix", (*RemoveKey)(nil),
 	},
 	{
-		"update_authority", (*UpdateAuthority)(nil),
+		"update_authority", "spl_token_metadata_interface:update_the_authority", (*UpdateAuthority)(nil),
 	},
 	{
-		"emit", (*Emit)(nil),
+		"emit", "spl_token_metadata_interface:emitter", (*Emit)(nil),
 	},
 })
 
@@ -142,7 +142,7 @@ func (obj *Instruction) TextEncode(encoder *text.Encoder, option *text.Option) e
 }
 
 func (obj *Instruction) UnmarshalWithDecoder(decoder *binary.Decoder) error {
-	return obj.BaseVariant.UnmarshalBinaryVariant(decoder, InstructionImplDef)
+	return InstructionImplDef.UnmarshalBinaryVariant(decoder, &obj.BaseVariant)
 }
 
 func (obj *Instruction) MarshalWithEncoder(encoder *binary.Encoder) error {

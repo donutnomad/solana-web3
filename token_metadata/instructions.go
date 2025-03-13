@@ -194,13 +194,13 @@ func (obj *Initialize) ValidateAndBuild() (*Instruction, error) {
 }
 
 func (obj *Initialize) MarshalWithEncoder(encoder *binary.Encoder) (err error) {
-	if err = encoder.WriteBytes([]byte(*obj.Name), false); err != nil {
+	if err = encoder.WriteBytes([]byte(*obj.Name), true); err != nil {
 		return err
 	}
-	if err = encoder.WriteBytes([]byte(*obj.Symbol), false); err != nil {
+	if err = encoder.WriteBytes([]byte(*obj.Symbol), true); err != nil {
 		return err
 	}
-	if err = encoder.WriteBytes([]byte(*obj.Uri), false); err != nil {
+	if err = encoder.WriteBytes([]byte(*obj.Uri), true); err != nil {
 		return err
 	}
 	return nil
@@ -373,7 +373,7 @@ func (obj *UpdateField) MarshalWithEncoder(encoder *binary.Encoder) (err error) 
 	if err = encoder.Encode(&obj.Field); err != nil {
 		return err
 	}
-	if err = encoder.WriteBytes([]byte(*obj.Value), false); err != nil {
+	if err = encoder.WriteBytes([]byte(*obj.Value), true); err != nil {
 		return err
 	}
 	return nil
@@ -543,7 +543,7 @@ func (obj *RemoveKey) MarshalWithEncoder(encoder *binary.Encoder) (err error) {
 	if err = encoder.Encode(&obj.Idempotent); err != nil {
 		return err
 	}
-	if err = encoder.WriteBytes([]byte(*obj.Key), false); err != nil {
+	if err = encoder.WriteBytes([]byte(*obj.Key), true); err != nil {
 		return err
 	}
 	return nil

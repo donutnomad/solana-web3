@@ -58,3 +58,10 @@ func (i IrysProvider) MetadataURI(ctx context.Context, connection *web3.Connecti
 		basic.Image,
 	)
 }
+
+type StubProvider struct {
+}
+
+func (i StubProvider) MetadataURI(ctx context.Context, connection *web3.Connection, payer web3.Signer, basic web3kit.BasicMetadata) (string, error) {
+	return "", nil
+}
