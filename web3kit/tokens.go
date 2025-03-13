@@ -110,9 +110,15 @@ func (tokenKit) GetTransferInstructions(
 			ata.NewCreateInstruction(payer, accounts[0], accounts[1], mint, web3.SystemProgramID, programId),
 		))
 	}
+	var ctx = context.Background()
 	if programId == web3.TokenProgram2022ID {
+		getMint, err := Token2022.GetMint(ctx, connection, mint, programId, web3.GetAccountInfoConfig{})
+		if err != nil {
+			return nil, err
+		}
+		var decimals = getMint.Decimals
 		Must(tx.AddInsBuilder(
-			spltoken2022.NewTransferInstruction(amount, associatedFrom, associatedTo, from).SetAuthorityAccount(from, multiSigners...),
+			spltoken2022.NewTransferCheckedInstruction(amount, decimals, associatedFrom, mint, associatedTo, from).SetAuthorityAccount(from, multiSigners...),
 		))
 	} else {
 		Must(tx.AddInsBuilder(

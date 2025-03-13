@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/donutnomad/solana-web3/example/common"
+	"github.com/donutnomad/solana-web3/irys"
 	"github.com/donutnomad/solana-web3/test"
 	"github.com/donutnomad/solana-web3/web3"
 	"github.com/donutnomad/solana-web3/web3kit"
@@ -33,8 +34,8 @@ func main() {
 	var owner = web3.NewComplexSigner(payer)
 	var connection = web3kit.Must1(web3.NewConnection(web3.Devnet.Url(), nil))
 
-	//provider := common.NewIrysProvider(irys.DEV, "https://arweave.net/")
-	provider := common.StubProvider{}
+	provider := common.NewIrysProvider(irys.DEV, "https://arweave.net/")
+	//provider := common.StubProvider{}
 	sig, mint := web3kit.Must2(web3kit.Token2022.CreateToken(
 		ctx, connection, payer, owner, args, provider, web3kit.SplToken2022, web3.CommitmentProcessed,
 	))
