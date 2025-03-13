@@ -6,7 +6,6 @@ import (
 	"github.com/donutnomad/solana-web3/web3"
 	"github.com/joho/godotenv"
 	"github.com/mr-tron/base58"
-	"log"
 	"os"
 	"path"
 	"runtime"
@@ -18,9 +17,7 @@ var _testLogo = "/9j/4AAQSkZJRgABAQEBLAEsAAD/4QmEaHR0cDovL25zLmFkb2JlLmNvbS94YXA
 func init() {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(filename))
-	if err := godotenv.Load(path.Join(root, ".env")); err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load(path.Join(root, ".env"))
 }
 
 func TestingLogo() []byte {
@@ -38,6 +35,9 @@ func processPath(input string) string {
 
 func GetYourPrivateKey() web3.Signer {
 	privateKey := os.Getenv("TEST_SIGNER")
+	if len(privateKey) == 0 {
+		panic("Please specify the environment variable: TEST_SIGNER=~/.config/solana/id.json")
+	}
 	var bs []byte
 	if strings.HasSuffix(privateKey, ".json") {
 		file := Must1(os.ReadFile(processPath(privateKey)))
