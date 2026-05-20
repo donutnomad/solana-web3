@@ -7,13 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/donutnomad/solana-web3/web3/utils"
-	binary "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/system"
-	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/gagliardetto/solana-go/rpc/ws"
-	"github.com/mr-tron/base58"
 	"io"
 	"log"
 	"math/big"
@@ -22,6 +15,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/donutnomad/solana-web3/web3/utils"
+	binary "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/ws"
+	"github.com/mr-tron/base58"
 )
 
 type Encoding string
@@ -1223,24 +1224,16 @@ func (c *Connection) confirmation(ctx context.Context, wsClient *ws.Client, sign
 	}
 	defer sub.Unsubscribe()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case resp, ok := <-sub.Response():
-			if !ok {
-				return nil, fmt.Errorf("subscription closed")
-			}
-			return &RpcResponseAndContext[SignatureResult]{
-				Context: response.Context,
-				Value: SignatureResult{
-					resp.Value.Err,
-				},
-			}, nil
-		case err := <-sub.Err():
-			return nil, err
-		}
+	resp, err := sub.Recv(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	return &RpcResponseAndContext[SignatureResult]{
+		Value: SignatureResult{
+			resp.Value.Err,
+		},
+	}, nil
 }
 
 type tmpConfirmResponse struct {
